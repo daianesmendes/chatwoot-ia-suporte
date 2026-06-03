@@ -1,0 +1,418 @@
+{
+  "name": "Dashboard Aprovações",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "dashboard",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "7f155b22-9bc9-46b8-9299-751bd8daf5c8",
+      "name": "WH /dashboard",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        240
+      ],
+      "webhookId": "6217889a-bc1b-4bc8-a1d3-5b57ae583135"
+    },
+    {
+      "parameters": {
+        "path": "pendentes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "86cfaace-10ab-4e5d-9c93-d2619466949b",
+      "name": "WH /pendentes",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        640
+      ],
+      "webhookId": "4ca0cd0c-565f-4f9f-bb18-1e2e573dbdd1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "h1",
+              "name": "html",
+              "value": "<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n<meta charset=\"UTF-8\">\n<title>Aprovações IA</title>\n<style>\n* { box-sizing: border-box; }\nbody { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1f2937; color: #f3f4f6; padding: 12px; margin: 0; }\n.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }\n.header h1 { font-size: 15px; margin: 0; }\n.btn-refresh { background: #374151; color: #fff; border: 0; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }\n.btn-refresh:hover { background: #4b5563; }\n.empty { text-align: center; padding: 40px 12px; color: #9ca3af; font-size: 13px; line-height: 1.6; }\n.empty a { color: #60a5fa; text-decoration: none; }\n.card { background: #374151; border-radius: 8px; padding: 12px; margin-bottom: 10px; font-size: 13px; }\n.card-header { display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; margin-bottom: 6px; }\n.card a { color: #60a5fa; text-decoration: none; font-size: 11px; }\n.card-question { color: #d1d5db; font-style: italic; margin: 6px 0; font-size: 12px; }\n.card-answer { background: #1f2937; padding: 8px; border-radius: 6px; margin: 6px 0; white-space: pre-wrap; font-size: 12px; line-height: 1.4; }\n.card-actions { display: flex; gap: 8px; margin-top: 8px; }\n.btn-approve, .btn-reject { flex: 1; padding: 8px; border-radius: 6px; border: 0; cursor: pointer; font-weight: 600; font-size: 12px; }\n.btn-approve { background: #10b981; color: #fff; }\n.btn-approve:hover { background: #059669; }\n.btn-reject { background: #ef4444; color: #fff; }\n.btn-reject:hover { background: #dc2626; }\n.btn-approve:disabled, .btn-reject:disabled { opacity: 0.5; cursor: not-allowed; }\n.status-msg { padding: 8px; border-radius: 6px; margin: 8px 0; font-size: 12px; text-align: center; }\n.status-ok { background: #065f46; }\n.status-err { background: #7f1d1d; }\n.hidden { display: none; }\n</style>\n</head>\n<body>\n<div id=\"app\" class=\"hidden\">\n  <div class=\"header\"><h1>📋 Aprovações IA</h1><button class=\"btn-refresh\" onclick=\"load()\">🔄</button></div>\n  <div id=\"status\"></div>\n  <div id=\"list\"><div class=\"empty\">Carregando...</div></div>\n</div>\n<div id=\"gate\"><div class=\"empty\">Aguardando contexto do Chatwoot...</div></div>\n<script>\nconst CENTRAL_CONV_ID = 300;\nconst BASE = 'https://n8n.example.com/webhook';\nconst CHATWOOT = 'https://chatwoot.example.com';\nconst $list = document.getElementById('list');\nconst $status = document.getElementById('status');\nconst $app = document.getElementById('app');\nconst $gate = document.getElementById('gate');\n\nlet pollTimer = null;\nlet currentConvId = null;\n\nfunction showGate(html) {\n  $app.classList.add('hidden');\n  $gate.classList.remove('hidden');\n  $gate.innerHTML = '<div class=\"empty\">' + html + '</div>';\n  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }\n}\n\nfunction showApp() {\n  $gate.classList.add('hidden');\n  $app.classList.remove('hidden');\n  load();\n  if (!pollTimer) pollTimer = setInterval(load, 10000);\n}\n\nfunction checkAccess() {\n  if (Number(currentConvId) === CENTRAL_CONV_ID) {\n    showApp();\n  } else {\n    showGate('📌 Este painel só funciona na conversa central de Aprovações IA.<br><br><a href=\"' + CHATWOOT + '/app/accounts/1/conversations/' + CENTRAL_CONV_ID + '\" target=\"_top\">Abrir conversa central →</a>');\n  }\n}\n\nwindow.addEventListener('message', function(e) {\n  try {\n    var data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;\n    if (data && data.event === 'appContext' && data.data && data.data.conversation) {\n      currentConvId = data.data.conversation.id;\n      checkAccess();\n    }\n  } catch (err) {}\n});\n\nsetTimeout(function() {\n  if (currentConvId === null) {\n    showGate('⚠️ Não foi possível detectar o contexto do Chatwoot.<br>Abra este painel pela sidebar de uma conversa.');\n  }\n}, 5000);\n\nfunction setStatus(msg, ok) {\n  $status.innerHTML = '<div class=\"status-msg ' + (ok!==false?'status-ok':'status-err') + '\">' + msg + '</div>';\n  setTimeout(function(){$status.innerHTML='';}, 2500);\n}\nfunction timeAgo(iso) {\n  if (!iso) return '';\n  var diff = (Date.now() - new Date(iso).getTime()) / 1000;\n  if (diff < 60) return 'há instantes';\n  if (diff < 3600) return 'há ' + Math.floor(diff/60) + ' min';\n  return 'há ' + Math.floor(diff/3600) + 'h';\n}\nfunction esc(s) {\n  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\n}\nasync function load() {\n  try {\n    var res = await fetch(BASE + '/pendentes', { cache: 'no-store' });\n    var data = await res.json();\n    var items = Array.isArray(data) ? data : (data.pendentes || []);\n    items.sort(function(a,b){ return new Date(a.created_at) - new Date(b.created_at); });\n    if (!items.length) {\n      $list.innerHTML = '<div class=\"empty\">Nenhuma sugestão pendente 🎉</div>';\n      return;\n    }\n    $list.innerHTML = items.map(function(it){\n      return '<div class=\"card\" data-id=\"' + it.central_message_id + '\">'\n        + '<div class=\"card-header\"><span><a href=\"' + CHATWOOT + '/app/accounts/' + (it.cliente_account_id||1) + '/conversations/' + it.cliente_conversation_id + '\" target=\"_top\">abrir conversa #' + it.cliente_conversation_id + ' →</a></span><span>' + timeAgo(it.created_at) + '</span></div>'\n        + (it.pergunta_cliente ? '<div class=\"card-question\">🙋 ' + esc(it.pergunta_cliente) + '</div>' : '')\n        + '<div class=\"card-answer\">💬 ' + esc(it.resposta_sugerida) + '</div>'\n        + '<div class=\"card-actions\">'\n        + '<button class=\"btn-approve\" onclick=\"act(\\'aprovar\\',\\'' + it.central_message_id + '\\',this)\">✅ Aprovar</button>'\n        + '<button class=\"btn-reject\" onclick=\"act(\\'reprovar\\',\\'' + it.central_message_id + '\\',this)\">❌ Reprovar</button>'\n        + '</div></div>';\n    }).join('');\n  } catch (e) { setStatus('Erro: ' + e.message, false); }\n}\nasync function act(action, id, btn) {\n  var card = btn.closest('.card');\n  card.querySelectorAll('button').forEach(function(b){ b.disabled = true; });\n  try {\n    await fetch(BASE + '/' + action + '?id=' + encodeURIComponent(id));\n    setStatus(action === 'aprovar' ? '✅ Aprovado' : '❌ Reprovado');\n    card.remove();\n    if (!document.querySelectorAll('.card').length) {\n      $list.innerHTML = '<div class=\"empty\">Nenhuma sugestão pendente 🎉</div>';\n    }\n  } catch (e) {\n    setStatus('Erro: ' + e.message, false);\n    card.querySelectorAll('button').forEach(function(b){ b.disabled = false; });\n  }\n}\n</script>\n</body>\n</html>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cba53d7d-8dd2-4909-abef-98578db0add9",
+      "name": "monta HTML",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1344,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "X-Frame-Options",
+                "value": "ALLOWALL"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "cabcae7e-6df1-4f00-8c18-41c1a62ec1c2",
+      "name": "Respond HTML",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1584,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "keys",
+        "keyPattern": "approval:*"
+      },
+      "id": "639029ca-2d94-44ed-86fe-95081b9d7eb9",
+      "name": "Redis: keys approval:*",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        640
+      ],
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst keys = Object.keys(input || {});\nif (!keys.length) return [{ json: { __empty: true } }];\nreturn keys.map(k => ({ json: { key: k } }));"
+      },
+      "id": "500e55b0-4587-40cd-896b-0b3a36b601d0",
+      "name": "split keys → items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e1",
+              "leftValue": "={{ $json.key }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "b6119b2c-793b-4a5a-9ed9-e7bab1edff1c",
+      "name": "tem chaves?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1824,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "value",
+        "key": "={{ $json.key }}",
+        "keyType": "string",
+        "options": {}
+      },
+      "id": "ca72dbae-964c-41df-9854-3873bb651db7",
+      "name": "Redis: get each",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2064,
+        528
+      ],
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const raw = item.json.value ?? item.json;\n  try {\n    const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;\n    return { json: obj };\n  } catch(e) { return { json: { _parse_error: String(e), raw } }; }\n});"
+      },
+      "id": "334f4f49-edfa-48be-86a6-e2ac4b9d957e",
+      "name": "parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "pendentes",
+        "options": {}
+      },
+      "id": "2188e5a8-9f80-4b01-8499-3765d637b0e9",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2544,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ JSON.stringify($json.pendentes || []) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "ba2f947f-2910-4ff9-b5c8-9bef171d46ce",
+      "name": "Respond JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2784,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "[]",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "1e5203c9-410b-4bb4-8c49-1b9b35d8e5c8",
+      "name": "Respond JSON vazio",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2064,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## dashboard_aprovacoes\n\nDois endpoints:\n• GET /dashboard  → retorna HTML do painel (iframe do Chatwoot)\n• GET /pendentes  → retorna JSON com todas as aprovações pendentes do Redis (chaves `approval:*`)\n\nNo Chatwoot:\nSettings → Integrations → Dashboard Apps → Add\n  Name: Aprovações IA\n  URL: https://n8n.example.com/webhook/dashboard\n\nO HTML faz polling a cada 10s e chama /aprovar /reprovar via fetch (sem abrir abas).",
+        "height": 360,
+        "width": 520,
+        "color": 5
+      },
+      "id": "ed4a1c9b-56bd-404d-b46c-2c72bb4b4810",
+      "name": "Doc1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        448,
+        288
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WH /dashboard": {
+      "main": [
+        [
+          {
+            "node": "monta HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "monta HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH /pendentes": {
+      "main": [
+        [
+          {
+            "node": "Redis: keys approval:*",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis: keys approval:*": {
+      "main": [
+        [
+          {
+            "node": "split keys → items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split keys → items": {
+      "main": [
+        [
+          {
+            "node": "tem chaves?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tem chaves?": {
+      "main": [
+        [
+          {
+            "node": "Redis: get each",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond JSON vazio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis: get each": {
+      "main": [
+        [
+          {
+            "node": "parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c0b15389-7745-4ced-a340-0aeefc7289e9",
+  "meta": {
+  },
+  "id": "Ls0teBJqxWUlTT7z",
+  "tags": [
+    {
+      "updatedAt": "2026-04-02T18:22:55.474Z",
+      "createdAt": "2026-04-02T18:22:55.474Z",
+      "id": "uIDYpUT55W4HmM65",
+      "name": "CS"
+    },
+    {
+      "updatedAt": "2026-05-21T20:16:30.455Z",
+      "createdAt": "2026-05-21T20:16:30.455Z",
+      "id": "o0GTrtLh8YvmbX07",
+      "name": "Chatwoot"
+    }
+  ]
+}
