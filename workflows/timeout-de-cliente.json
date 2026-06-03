@@ -1,0 +1,704 @@
+{
+  "name": "Chatwoot: Timeout de Cliente",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Chatwoot: Timeout de Cliente\n\nSe não houver retorno por parte do cliente em até 10 minutos, o chat é encerrado.",
+        "height": 128,
+        "width": 390
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2800,
+        16
+      ],
+      "typeVersion": 1,
+      "id": "b7344696-dc75-4ae0-90df-b9b9cc91e5c8",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5f00574a-c087-4dbd-b449-d3321e8743b2",
+              "leftValue": "={{ $json.message_type }}",
+              "rightValue": "outgoing",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "7df7963d-17f6-4015-b45f-3c4a13ee01f8",
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "message_created",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cbd366bb-0cb5-45d9-b7b4-8d729529c4d7",
+              "leftValue": "={{ $json.conversation_status }}",
+              "rightValue": "=open",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2368,
+        192
+      ],
+      "id": "381322d1-8bb2-4561-b9d8-889460594850",
+      "name": "if message = outgoing"
+    },
+    {
+      "parameters": {
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $('dados webhook').item.json.account_id }}/conversations/{{ $('dados webhook').item.json.conversation_id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "YOUR_CHATWOOT_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1328,
+        160
+      ],
+      "id": "0efb9342-33d2-4325-a347-cdbe5041c110",
+      "name": "get conversa2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b6484d51-3178-477e-95a1-9d0c15199716",
+              "name": "account_id",
+              "value": "={{ $json.body.account.id }}",
+              "type": "number"
+            },
+            {
+              "id": "0b6740a9-ded4-4f6f-ab8d-d9018b297d04",
+              "name": "inbox_id",
+              "value": "={{ $json.body.conversation.inbox_id }}",
+              "type": "string"
+            },
+            {
+              "id": "65d98995-a726-4394-b44c-d4e70fd9bc33",
+              "name": "conversation_id",
+              "value": "={{ $json.body.conversation.id }}",
+              "type": "string"
+            },
+            {
+              "id": "75408aa6-925e-4421-a542-8d2727095115",
+              "name": "outgoing_message_id",
+              "value": "={{ $json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "7f3bc1e1-bc5f-4b52-8bdd-2480867740e0",
+              "name": "contact_inbox_id",
+              "value": "={{$json.body.conversation.contact_inbox.id}}",
+              "type": "string"
+            },
+            {
+              "id": "ba99a8b2-cef2-406b-a8fe-908558b93045",
+              "name": "source_id",
+              "value": "={{$json.body.conversation.contact_inbox.source_id}}",
+              "type": "string"
+            },
+            {
+              "id": "459b6db7-2b7d-48c2-ac74-29220fecddfa",
+              "name": "content_text",
+              "value": "={{\n  String($json.body.content ?? '')\n    .replace(/<[^>]*>/g, '')     // remove tags HTML\n    .replace(/&nbsp;/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim()\n}}",
+              "type": "string"
+            },
+            {
+              "id": "73bf7243-f1b3-4444-9a9c-c3d503cff241",
+              "name": "message_type",
+              "value": "={{$json.body.message_type}}",
+              "type": "string"
+            },
+            {
+              "id": "afd88fdd-0662-4ce7-a1ab-f5d58f5495cc",
+              "name": "contact_name",
+              "value": "={{$json.body.sender.name}}",
+              "type": "string"
+            },
+            {
+              "id": "5800065b-cb0e-4452-8c55-35dea68d47c1",
+              "name": "conversation_status",
+              "value": "={{$json.body.conversation.status}}",
+              "type": "string"
+            },
+            {
+              "id": "f10240ab-7bc7-41d2-803e-7e2cf8b8e532",
+              "name": "user_agent",
+              "value": "={{$json.headers['user-agent']}}",
+              "type": "string"
+            },
+            {
+              "id": "24f715f6-96bb-4dcc-9e86-c84a717ee0b7",
+              "name": "event",
+              "value": "={{$json.body.event}}",
+              "type": "string"
+            },
+            {
+              "id": "4729ee72-eec4-44a4-87d0-f67fd953275f",
+              "name": "outgoing_created_at",
+              "value": "={{ $json.body.conversation.messages[0].created_at }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2576,
+        192
+      ],
+      "id": "eb916bf1-e100-4930-93ef-b091c20628b3",
+      "name": "dados webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $('dados webhook').item.json.account_id }}/conversations/{{ $('dados webhook').item.json.conversation_id }}/toggle_status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "YOUR_CHATWOOT_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"resolved\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -288,
+        128
+      ],
+      "id": "9ef9c36e-ab36-4545-927a-7c605e2fbbb6",
+      "name": "resolve conversa1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1391be36-ecbe-41a3-8625-6699f520c25f",
+              "leftValue": "={{ $json.should_close }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -704,
+        144
+      ],
+      "id": "d312ed40-4664-4142-9b42-990824485727",
+      "name": "if should close = true"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $('dados webhook').item.json.account_id }}/conversations/{{ $('dados webhook').item.json.conversation_id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "YOUR_CHATWOOT_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"Olá! Como não obtive retorno nos últimos 10 minutos, vou encerrar este atendimento por aqui. Quando estiver disponível, fique à vontade para entrar em contato novamente. Estamos à disposição para ajudar!\",\n  \"message_type\": \"outgoing\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -496,
+        128
+      ],
+      "id": "a310881a-2a77-4010-b11a-68961f4a7699",
+      "name": "aviso de encerramento"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "timeout",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2784,
+        192
+      ],
+      "id": "6bf14fc2-8f3b-4e28-90bc-a46911757923",
+      "name": "Webhook1",
+      "webhookId": "dd7f55a8-3e24-4558-8d5e-20cd64b9c3c8",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "MERGE dbo.chatwoot_auto_close AS t\nUSING (\n  SELECT\n    TRY_CONVERT(INT,   '{{ $json.account_id }}')        AS account_id,\n    TRY_CONVERT(INT,   '{{ $json.conversation_id }}')   AS conversation_id,\n    TRY_CONVERT(INT,   '{{ $json.outgoing_message_id }}') AS outgoing_message_id,\n    TRY_CONVERT(BIGINT,'{{ $json.outgoing_created_at }}') AS outgoing_created_at\n) AS s\nON (t.account_id = s.account_id AND t.conversation_id = s.conversation_id)\n\nWHEN MATCHED THEN\n  UPDATE SET\n    t.outgoing_message_id = s.outgoing_message_id,\n    t.outgoing_created_at = s.outgoing_created_at,\n    t.updated_at = SYSDATETIME()\n\nWHEN NOT MATCHED THEN\n  INSERT (account_id, conversation_id, outgoing_message_id, outgoing_created_at, updated_at)\n  VALUES (s.account_id, s.conversation_id, s.outgoing_message_id, s.outgoing_created_at, SYSDATETIME());\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -2160,
+        176
+      ],
+      "id": "18beb7f2-2c76-4a33-b9de-73436a7075e5",
+      "name": "salva temporizador de encerramento",
+      "executeOnce": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "",
+          "name": "SQL Server account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1952,
+        176
+      ],
+      "id": "9b1e8405-ca8e-4850-9545-1c4528e57820",
+      "name": "aguarda 10 minutos",
+      "webhookId": "dd86326e-ca82-4dc0-b218-3023268dfe3d"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT TOP 1\n  outgoing_message_id,\n  outgoing_created_at\nFROM dbo.chatwoot_auto_close\nWHERE account_id = TRY_CONVERT(INT, '{{ $('dados webhook').item.json.account_id }}')\n  AND conversation_id = TRY_CONVERT(INT, '{{ $('dados webhook').item.json.conversation_id }}');",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -1744,
+        176
+      ],
+      "id": "1a40321c-3f68-4503-9e52-03f25733a1c6",
+      "name": "busca temporizador atual",
+      "executeOnce": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "",
+          "name": "SQL Server account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "39c865f6-0b14-429b-ae91-2461d445d602",
+              "leftValue": "={{ $('dados webhook').item.json.outgoing_message_id }}",
+              "rightValue": "={{ $json.outgoing_message_id }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1536,
+        176
+      ],
+      "id": "87893523-2b25-49ca-afdf-27cfaf3b915d",
+      "name": "if timer ainda é o último"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chatwoot pode retornar array direto ou { payload: [...] }\nconst data = $json.payload ?? $json ?? [];\n\n// timestamp do outgoing salvo no SQL\nconst outgoingCreatedAt = Number($node[\"busca temporizador atual\"].json.outgoing_created_at); \n// ⚠️ Troque \"Microsoft SQL1\" pelo NOME do seu node SELECT (o da imagem)\n\nconst hasIncomingAfter = data.some(m =>\n  m.message_type === 0 && Number(m.created_at) > outgoingCreatedAt\n);\n\nreturn [{\n  should_close: !hasIncomingAfter,\n  hasIncomingAfter,\n  outgoingCreatedAt\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        144
+      ],
+      "id": "c46e1db9-a387-4bba-8652-1e7a465edce6",
+      "name": "verifica resposta do cliente"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM dbo.chatwoot_auto_close\nWHERE account_id = TRY_CONVERT(INT, '{{ $('dados webhook').item.json.account_id }}')\n  AND conversation_id = TRY_CONVERT(INT, '{{ $('dados webhook').item.json.conversation_id }}');",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ceca18ea-f010-4705-b5b1-033431913064",
+      "name": "limpa temporizador",
+      "executeOnce": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "",
+          "name": "SQL Server account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6060886f-a957-4c59-991b-203b9f0aba8c",
+              "name": "label",
+              "value": "={{ $('get conversa2').item.json.meta.labels[0] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        256
+      ],
+      "id": "e177bdc8-98bf-42e1-83be-68c8341b6156",
+      "name": "set label"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $('dados webhook').item.json.account_id }}/conversations/{{ $('dados webhook').item.json.conversation_id }}/labels ",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "YOUR_CHATWOOT_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"labels\": [\n  \"fechado_por_inatividade\",\n  \"{{ $json.label }}\"\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        256
+      ],
+      "id": "12c2cfc2-f5b6-41fd-95f7-515f4c93eedf",
+      "name": "adiciona label fechado_por_inatividade"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "06b44689-37ff-4db6-b441-c0d42c965cb2",
+              "leftValue": "={{ ($json.payload || []).some(m => m.message_type === 2 && String(m.content || '').toLowerCase().includes('marked resolved')) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1120,
+        160
+      ],
+      "id": "31d57099-efa1-42cb-8a44-34dddf64cde6",
+      "name": "if status não é resolvido"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "if message = outgoing": {
+      "main": [
+        [
+          {
+            "node": "salva temporizador de encerramento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get conversa2": {
+      "main": [
+        [
+          {
+            "node": "if status não é resolvido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "dados webhook": {
+      "main": [
+        [
+          {
+            "node": "if message = outgoing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "resolve conversa1": {
+      "main": [
+        [
+          {
+            "node": "limpa temporizador",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "set label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if should close = true": {
+      "main": [
+        [
+          {
+            "node": "aviso de encerramento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aviso de encerramento": {
+      "main": [
+        [
+          {
+            "node": "resolve conversa1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "dados webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salva temporizador de encerramento": {
+      "main": [
+        [
+          {
+            "node": "aguarda 10 minutos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aguarda 10 minutos": {
+      "main": [
+        [
+          {
+            "node": "busca temporizador atual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "busca temporizador atual": {
+      "main": [
+        [
+          {
+            "node": "if timer ainda é o último",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if timer ainda é o último": {
+      "main": [
+        [
+          {
+            "node": "get conversa2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verifica resposta do cliente": {
+      "main": [
+        [
+          {
+            "node": "if should close = true",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set label": {
+      "main": [
+        [
+          {
+            "node": "adiciona label fechado_por_inatividade",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if status não é resolvido": {
+      "main": [
+        [
+          {
+            "node": "verifica resposta do cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "35a34441-c53d-417a-8359-9cd840d028f9",
+  "meta": {
+  },
+  "id": "IjiffZtiFp7CSN7j",
+  "tags": [
+    {
+      "updatedAt": "2026-04-02T18:22:55.474Z",
+      "createdAt": "2026-04-02T18:22:55.474Z",
+      "id": "uIDYpUT55W4HmM65",
+      "name": "CS"
+    },
+    {
+      "updatedAt": "2026-05-21T20:16:30.455Z",
+      "createdAt": "2026-05-21T20:16:30.455Z",
+      "id": "o0GTrtLh8YvmbX07",
+      "name": "Chatwoot"
+    }
+  ]
+}

@@ -1,0 +1,710 @@
+{
+  "name": "SUB: Callback Aprovação Humana",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## sub_callback_aprovacao_v3\n\nDois webhooks GET que respondem aos cliques dos links na conversa central:\n• /webhook/aprovar?id={conversation_id}\n• /webhook/reprovar?id={conversation_id}\n\nFluxo:\n1. webhook capture id\n2. Set decision (approve/reject)\n3. busca Redis approval:{id}\n4. approve → resposta ao cliente + team bot + remove label\n5. reject → atribui N1 + label suporte_n1 + aviso\n6. limpa Redis\n7. responde HTML simples confirmando a ação\n\nConstantes:\n• TEAM_BOT = 1, TEAM_N1 = 2\n• CENTRAL_CONVERSATION_ID = 300",
+        "height": 576,
+        "width": 316,
+        "color": 6
+      },
+      "id": "0cbdf834-acea-42d8-8cfe-ab42c8558064",
+      "name": "Doc",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4160,
+        976
+      ]
+    },
+    {
+      "parameters": {
+        "path": "aprovar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "634f2111-be81-46ae-ba84-6e60de0eddf1",
+      "name": "WH /aprovar",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        4576,
+        1008
+      ],
+      "webhookId": "cfa4e5a8-c17c-45b1-aff5-1f22e8c01656"
+    },
+    {
+      "parameters": {
+        "path": "reprovar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "af5f5642-ebd2-4837-84f3-8627716c5347",
+      "name": "WH /reprovar",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        4576,
+        1408
+      ],
+      "webhookId": "b3831926-5b78-4a3a-8b69-f25d57f62604"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "decision",
+              "value": "approve",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "central_message_id",
+              "value": "={{ $json.query.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "338dc717-5d2e-4faf-8888-2e70b35ad48a",
+      "name": "set decision=approve",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4816,
+        1008
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "decision",
+              "value": "reject",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "central_message_id",
+              "value": "={{ $json.query.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f99acbdb-e8c6-4b9c-a0b2-90731b2f2c73",
+      "name": "set decision=reject",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4816,
+        1408
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "=approval:{{ $json.central_message_id }}",
+        "keyType": "string",
+        "options": {}
+      },
+      "id": "754f5c4e-8c43-4496-9d66-7f19bc457c71",
+      "name": "busca pendência (Redis)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        5056,
+        1200
+      ],
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "p1",
+              "leftValue": "={{ $json.propertyName ?? $json.value }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "02e76f4e-bf69-4cb4-85e4-a52d81f59b20",
+      "name": "havia pendência?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5296,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const redisRaw = $input.first().json.propertyName ?? $input.first().json.value ?? $input.first().json;\nconst pending = typeof redisRaw === 'string' ? JSON.parse(redisRaw) : redisRaw;\n// Recupera decision do contexto anterior (vem dos sets)\nlet decision = null;\ntry { decision = $('set decision=approve').first().json.decision; } catch(e) {}\nif (!decision) { try { decision = $('set decision=reject').first().json.decision; } catch(e) {} }\nreturn [{ json: { ...pending, decision } }];"
+      },
+      "id": "804183ee-b196-4818-af34-563837e78e1b",
+      "name": "merge contexto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5536,
+        1088
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 204
+        }
+      },
+      "id": "3b55256d-3e93-43a9-857b-cfd720927a86",
+      "name": "Respond 204 (expirada)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        5536,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "combinator": "and",
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "s1",
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "approve",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "s2",
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "reject",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3357258a-35ab-4c24-ba30-12db8ea8f120",
+      "name": "approve / reject",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        5776,
+        1088
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $json.cliente_account_id }}/conversations/{{ $json.cliente_conversation_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": {{ JSON.stringify($json.resposta_sugerida) }},\n  \"message_type\": \"outgoing\",\n  \"private\": false\n}",
+        "options": {}
+      },
+      "id": "2467dd02-ab19-415a-99e2-5d024d69553a",
+      "name": "envia ao cliente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        6128,
+        928
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "chatwoot-api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $('merge contexto').item.json.cliente_account_id }}/conversations/{{ $('merge contexto').item.json.cliente_conversation_id }}/assignments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"team_id\": 1 }",
+        "options": {}
+      },
+      "id": "e5a3fb3f-40fa-477c-9a09-aa05396ec62e",
+      "name": "devolve team bot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        6368,
+        928
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "chatwoot-api"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $json.cliente_account_id }}/conversations/{{ $json.cliente_conversation_id }}/assignments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"team_id\": 2 }",
+        "options": {}
+      },
+      "id": "a0a5a56e-d88d-4d87-b555-5e13b7eeb3e4",
+      "name": "atribui ao N1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        6032,
+        1248
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "chatwoot-api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $('merge contexto').item.json.cliente_account_id }}/conversations/{{ $('merge contexto').item.json.cliente_conversation_id }}/labels",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"labels\": [\"suporte_n1\"] }",
+        "options": {}
+      },
+      "id": "741acbdf-ab06-4639-826e-8ea68c06a618",
+      "name": "label suporte_n1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        6272,
+        1248
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "chatwoot-api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $('merge contexto').item.json.cliente_account_id }}/conversations/{{ $('merge contexto').item.json.cliente_conversation_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"Um atendente irá continuar esse atendimento em instantes. 👋\",\n  \"message_type\": \"outgoing\",\n  \"private\": false\n}",
+        "options": {}
+      },
+      "id": "b52cd2c5-526c-4488-bc5b-8012907e43e0",
+      "name": "avisa cliente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        6512,
+        1248
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "chatwoot-api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $('merge contexto').item.json.cliente_account_id }}/conversations/{{ $('merge contexto').item.json.cliente_conversation_id }}/labels",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"labels\": [\"aguardando_aprovacao_ia\"] }",
+        "options": {}
+      },
+      "id": "cf66a931-bca3-4a8e-9ca9-111a6edb2e17",
+      "name": "remove label aguardando",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        6752,
+        1088
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "chatwoot-api"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "=approval:{{ $('merge contexto').item.json.central_message_id }}"
+      },
+      "id": "d5fefb94-5012-43df-a545-df0353d147b8",
+      "name": "limpa Redis",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        6992,
+        1088
+      ],
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 204
+        }
+      },
+      "id": "8c8b0989-5acf-427b-941b-958824ed969c",
+      "name": "Respond 204",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        7232,
+        1088
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WH /aprovar": {
+      "main": [
+        [
+          {
+            "node": "set decision=approve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH /reprovar": {
+      "main": [
+        [
+          {
+            "node": "set decision=reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set decision=approve": {
+      "main": [
+        [
+          {
+            "node": "busca pendência (Redis)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set decision=reject": {
+      "main": [
+        [
+          {
+            "node": "busca pendência (Redis)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "busca pendência (Redis)": {
+      "main": [
+        [
+          {
+            "node": "havia pendência?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "havia pendência?": {
+      "main": [
+        [
+          {
+            "node": "merge contexto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 204 (expirada)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge contexto": {
+      "main": [
+        [
+          {
+            "node": "approve / reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "approve / reject": {
+      "main": [
+        [
+          {
+            "node": "envia ao cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "atribui ao N1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "envia ao cliente": {
+      "main": [
+        [
+          {
+            "node": "devolve team bot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "devolve team bot": {
+      "main": [
+        [
+          {
+            "node": "remove label aguardando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atribui ao N1": {
+      "main": [
+        [
+          {
+            "node": "label suporte_n1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "label suporte_n1": {
+      "main": [
+        [
+          {
+            "node": "avisa cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "avisa cliente": {
+      "main": [
+        [
+          {
+            "node": "remove label aguardando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "remove label aguardando": {
+      "main": [
+        [
+          {
+            "node": "limpa Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "limpa Redis": {
+      "main": [
+        [
+          {
+            "node": "Respond 204",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6b3fcdb5-ea8e-4798-ae22-76df940c2a51",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "eBUIjE7hDcwCkqdW",
+  "tags": [
+    {
+      "updatedAt": "2026-04-02T18:22:55.474Z",
+      "createdAt": "2026-04-02T18:22:55.474Z",
+      "id": "uIDYpUT55W4HmM65",
+      "name": "CS"
+    },
+    {
+      "updatedAt": "2026-05-21T20:16:30.455Z",
+      "createdAt": "2026-05-21T20:16:30.455Z",
+      "id": "o0GTrtLh8YvmbX07",
+      "name": "Chatwoot"
+    }
+  ]
+}
