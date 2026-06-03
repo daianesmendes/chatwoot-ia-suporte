@@ -1,0 +1,15 @@
+# segredos / credenciais — nunca versionar
+*.env
+.env*
+credentials*.json
+secrets*.json
+
+# exports brutos do n8n (podem conter pinData/credenciais)
+**/raw/
+*_RAW.json
+
+# SO / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
