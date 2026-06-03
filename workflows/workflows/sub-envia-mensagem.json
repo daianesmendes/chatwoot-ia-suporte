@@ -1,0 +1,226 @@
+{
+  "name": "SUB: Envia mensagem",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "account_id ",
+              "type": "any"
+            },
+            {
+              "name": "conversation_id",
+              "type": "any"
+            },
+            {
+              "name": "content",
+              "type": "any"
+            },
+            {
+              "name": "private"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        208
+      ],
+      "id": "4f26a1fb-7913-4c4d-8fcd-70ef9acd5b55",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "account_id",
+              "value": "={{ $json[\"account_id \"] }}",
+              "type": "number"
+            },
+            {
+              "id": "a2",
+              "name": "conversation_id",
+              "value": "={{ $json.conversation_id }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "content",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "private",
+              "value": "={{ $json.private ?? false }}",
+              "type": "boolean"
+            },
+            {
+              "id": "a5",
+              "name": "message_type",
+              "value": "={{ $json.message_type ?? 'outgoing' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        208
+      ],
+      "id": "7cac583e-3afb-4493-ba18-4048ddba31e2",
+      "name": "normaliza input"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatwoot.example.com/api/v1/accounts/{{ $json.account_id }}/conversations/{{ $json.conversation_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": {{ JSON.stringify($json.content) }},\n  \"message_type\": {{ JSON.stringify($json.message_type) }},\n  \"private\": {{ $json.private }}\n}",
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        864,
+        208
+      ],
+      "id": "1ef60d40-6fa8-4b3f-9f87-f209f72137c6",
+      "name": "POST /messages",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "",
+          "name": "zap response"
+        },
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "chatwoot-api"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1",
+              "name": "error",
+              "value": "={{ $json.error?.message ?? 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "e2",
+              "name": "conversation_id",
+              "value": "={{ $('normaliza input').item.json.conversation_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1088,
+        224
+      ],
+      "id": "11e0dbf9-24be-4050-8814-846d126879d9",
+      "name": "monta erro"
+    },
+    {
+      "parameters": {
+        "content": "## Centraliza envio de mensagens do Chatwoot\n",
+        "height": 104,
+        "width": 436,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        400,
+        64
+      ],
+      "id": "d01e6ef1-b4d6-4da8-9b2f-fb617ef1dc06",
+      "name": "Doc"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "normaliza input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "normaliza input": {
+      "main": [
+        [
+          {
+            "node": "POST /messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /messages": {
+      "main": [
+        [],
+        [
+          {
+            "node": "monta erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6ed6c1cf-8c1b-46e2-876b-de936741bcf4",
+  "meta": {
+  },
+  "id": "NqwXrwI0A1bkBfjS",
+  "tags": [
+    {
+      "updatedAt": "2026-04-02T18:22:55.474Z",
+      "createdAt": "2026-04-02T18:22:55.474Z",
+      "id": "uIDYpUT55W4HmM65",
+      "name": "CS"
+    },
+    {
+      "updatedAt": "2026-05-21T20:16:30.455Z",
+      "createdAt": "2026-05-21T20:16:30.455Z",
+      "id": "o0GTrtLh8YvmbX07",
+      "name": "Chatwoot"
+    }
+  ]
+}

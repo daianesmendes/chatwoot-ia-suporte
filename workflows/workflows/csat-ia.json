@@ -1,0 +1,423 @@
+{
+  "name": "CSAT IA",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Webhook CSAT (IA) \n\nRecebe a nota do CSAT gerada pela IA e registra conforme o tipo (nota/comentário).",
+        "height": 128,
+        "width": 416,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "1cb215ba-7cc0-4d72-9f19-7c111ad7e561",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "CSAT IA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 842415545,
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=842415545"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "DATA": "={{ $now.toFormat('dd/MM/yyyy') }}",
+            "CHAT ID ": "={{ $json.conversation_id }}",
+            "NOTA": "={{ $json.submitted_value }}",
+            "PHONE": "={{ $json.phone }}"
+          },
+          "matchingColumns": [
+            "CHAT ID "
+          ],
+          "schema": [
+            {
+              "id": "DATA",
+              "displayName": "DATA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "CHAT ID ",
+              "displayName": "CHAT ID ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "PHONE",
+              "displayName": "PHONE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "NOTA",
+              "displayName": "NOTA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "COMENTÁRIO",
+              "displayName": "COMENTÁRIO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        720,
+        64
+      ],
+      "id": "4c6b0f10-7d3d-484c-8e28-012b41959f08",
+      "name": "Adiciona nota",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "CSAT IA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 842415545,
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=842415545"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "DATA": "={{ $now.toFormat('dd/MM/yyyy') }}",
+            "CHAT ID ": "={{ $json.conversation_id }}",
+            "COMENTÁRIO": "={{ $json.submitted_value }}",
+            "PHONE": "={{ $json.phone }}"
+          },
+          "matchingColumns": [
+            "CHAT ID "
+          ],
+          "schema": [
+            {
+              "id": "DATA",
+              "displayName": "DATA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "CHAT ID ",
+              "displayName": "CHAT ID ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "PHONE",
+              "displayName": "PHONE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "NOTA",
+              "displayName": "NOTA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "COMENTÁRIO",
+              "displayName": "COMENTÁRIO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        720,
+        288
+      ],
+      "id": "603c0b96-231b-4f4e-85a8-e3bb12395399",
+      "name": "Adiciona comentário",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "input_select",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a3d8e88f-2296-4441-92d4-b8e8150d66c4"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "input_select"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a4feb0bb-a40c-4922-9801-4bf78fbe3b13",
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "form",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "form"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        176
+      ],
+      "id": "28767b10-be2f-49a6-838d-c19e72e11dec",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5d7ee6b9-a012-4bcd-8c07-87924ca40ac4",
+              "name": "event",
+              "value": "={{ $json.body.event }}",
+              "type": "string"
+            },
+            {
+              "id": "bdefba58-5060-4eef-a56d-645b1b1aa9e1",
+              "name": "content_type",
+              "value": "={{ $json.body.content_type }}",
+              "type": "string"
+            },
+            {
+              "id": "5076d426-faf8-4784-a6f3-5a87ec474483",
+              "name": "conversation_id",
+              "value": "={{ $json.body.conversation.id }}",
+              "type": "number"
+            },
+            {
+              "id": "6d7bc154-35a0-415b-b01c-1570094dd27f",
+              "name": "email",
+              "value": "={{ $json.body.conversation.meta.sender.email }}",
+              "type": "string"
+            },
+            {
+              "id": "4703d61c-8896-4f4c-8714-241a1eb2671b",
+              "name": "submitted_value",
+              "value": "={{ $json.body.content_attributes.submitted_values[0].value }}",
+              "type": "string"
+            },
+            {
+              "id": "2b3c6b71-6f67-481f-9d1d-86411e74d2c2",
+              "name": "phone",
+              "value": "={{ $json.body.conversation.meta.sender.phone_number }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        176
+      ],
+      "id": "d8d47cbc-b72a-4cb4-97ae-011abf5eb5b2",
+      "name": "mapeia dados2"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "csat_bot",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        176
+      ],
+      "id": "2441140a-6f69-4112-a4ea-c6efa60b9ad1",
+      "name": "csat bot",
+      "webhookId": "4e1e5eaf-51df-4818-85f5-dea5ea47eb08"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Adiciona nota",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Adiciona comentário",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mapeia dados2": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "csat bot": {
+      "main": [
+        [
+          {
+            "node": "mapeia dados2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7dfbd1e5-d559-417e-93a6-64883a5f13d4",
+  "meta": {
+  },
+  "id": "ywUyME9mgPKROE4Y",
+  "tags": [
+    {
+      "updatedAt": "2026-04-02T18:22:55.474Z",
+      "createdAt": "2026-04-02T18:22:55.474Z",
+      "id": "uIDYpUT55W4HmM65",
+      "name": "CS"
+    },
+    {
+      "updatedAt": "2026-05-21T20:16:30.455Z",
+      "createdAt": "2026-05-21T20:16:30.455Z",
+      "id": "o0GTrtLh8YvmbX07",
+      "name": "Chatwoot"
+    }
+  ]
+}
